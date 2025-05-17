@@ -1,87 +1,84 @@
-import fs from 'fs';
-import path from 'path';
-import inquirer from 'inquirer';
-import dotenv from 'dotenv';
-import { commentOnJira } from '../services/jiraClient';
+import { GoogleGenerativeAI } from "@google/generative-ai"; // ✅
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const LOG_PATH = path.resolve('test-data/sample_log.txt');
-const LOCAL_LOG_PATH = path.resolve('test-data/gemini_actions.log');
+const API_KEY = process.env.GEMINI_API_KEY;
 
-/**
- * Função que gera a explicação do erro a partir do log (simulando IA).
- * Recebe o conteúdo do log e retorna uma string explicativa.
- * Se quiser conectar a IA real, faça a chamada aqui.
- */
-export async function gerarExplicacaoErro(logContent: string): Promise<string> {
-  // Aqui você pode substituir pela sua integração com IA, por enquanto só simulo.
-  // Exemplo: chamar um serviço que gera a explicação.
-  // Vou simular um retorno simples para exemplificar:
-
-  // Simulação simples (substitua pela chamada real):
-  return `Explicação para o erro:\n\n${logContent.substring(0, 300)}... [texto gerado pela IA]`;
+if (!API_KEY) {
+  throw new Error("❌ API KEY do Gemini não encontrada no .env (GEMINI_API_KEY)");
 }
 
-async function main() {
+const client = new GoogleGenerativeAI(API_KEY);
+const MAX_INPUT_LENGTH = 8000; // Limite seguro para input do Gemini
+
+/**
+ * Gera uma explicação para um log de erro usando a IA Gemini.
+ * @param logContent Conteúdo bruto do log.
+ * @returns Explicação clara e didática para analistas de QA.
+ */
+export async function gerarExplicacaoErro(logContent: string): Promise<string> {
   try {
-    // Lê o arquivo de log
-    const logContent = fs.readFileSync(LOG_PATH, 'utf-8');
+    const sanitizedInput = logContent.length > MAX_INPUT_LENGTH
+      ? logContent.substring(0, MAX_INPUT_LENGTH)
+      : logContent;
 
-    console.log('\n📄 Analisando logs com IA...\n');
+		const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
+		const result = await model.generateContent({
+		  contents: [
+			{
+			  role: "user",
+			  parts: [
+				{ text: `Explique o seguinte erro de forma clara e didática para um analista de QA:\n\n${sanitizedInput}` }
+			  ]
+			}
+		  ],
+		  generationConfig: {
+			temperature: 0.7,
+			maxOutputTokens: 512
+		  }
+		});
+	
+		const text = result.response.text().trim();
 
-    // Chama a função que gera a explicação, passando o conteúdo do log
-    const explanation = await gerarExplicacaoErro(logContent);
-
-    console.log('📍 Explicação gerada:\n');
-    console.log(explanation);
-
-    // Pergunta para o usuário o que fazer
-    const { action } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'action',
-        message: 'O que deseja fazer com essa explicação?',
-        choices: [
-          { name: 'Corrigir e reenviar logs', value: 'fix' },
-          { name: 'Gerar resumo técnico e enviar para o Jira', value: 'jira' },
-          { name: 'Salvar localmente e encerrar', value: 'local' },
-        ],
-      },
-    ]);
-
-    if (action === 'jira') {
-      const { issueKey } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'issueKey',
-          message: 'Informe o código do ticket Jira (ex: TQ-1):',
-          validate: (input) => input.trim() !== '' || 'Informe um código válido',
-        },
-      ]);
-
-      await commentOnJira(issueKey, explanation);
-      console.log('\n📬 Comentário enviado ao Jira com sucesso!');
+    if (!text) {
+      throw new Error("Resposta da IA vazia.");
     }
 
-    if (action === 'local') {
-      fs.appendFileSync(
-        LOCAL_LOG_PATH,
-        `\n[${new Date().toISOString()}]\n${explanation}\n`
-      );
-      console.log('\n🗃️ Log salvo localmente em `gemini_actions.log`.');
-    }
+    return text;
+  } catch (error: any) {
+    console.error("❌ Erro ao gerar explicação com Gemini:", error.message);
+		
+		if (error.details && error.details.error_message) {
+			console.error("Erro detalhado do Gemini:", error.details.error_message);
+			// Lançar um erro mais específico, útil para debugging
+      throw new Error(`Erro de Gemini: ${error.details.error_message} Detalhes: ${JSON.stringify(error.details, null, 2)}`); 
+		} else if (error.response) {
+			console.error("Erro de resposta Gemini:", error.response.status);
+			throw new Error(`Erro de resposta Gemini: ${error.response.status} ${error.message}`); 
+		} else {
 
-    if (action === 'fix') {
-      console.log('\n🔧 Correção simulada. Integre aqui comandos ou pipelines para corrigir.');
-    }
-
-    console.log('\n✅ Agente finalizado.\n');
-  } catch (err: any) {
-    console.error('❌ Erro no agente:', err.message);
+			throw new Error("Erro ao gerar explicação com IA. Verifique sua conexão ou chave da API. Detalhes do erro: " + JSON.stringify(error, null, 2));
+		}
   }
 }
 
-if (require.main === module) {
-  main();
+//Exemplo de uso (incluindo tratamento de erros):
+async function executar() {
+	try {
+		const logErro = `
+		Algum erro aqui:
+		Erro de conexão com o banco de dados.
+		Detalhes: ERRO 1001
+		Dados passados para a consulta: {nome: "João", idade: 30}
+		...mais detalhes...`;
+
+		const explicacaoErro = await gerarExplicacaoErro(logErro);
+
+		console.log(explicacaoErro);
+	} catch (error) {
+		console.error("Erro ao executar:", error);
+	}
 }
+
+executar();
