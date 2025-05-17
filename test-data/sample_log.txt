@@ -1,0 +1,30 @@
+
+[2025-05-16T12:03:25.123Z] [ERROR] [auth-service] [req-72fa] Failed to authenticate user: JWT token expired
+    at verifyToken (/app/services/authService.js:45:13)
+    at processTicksAndRejections (internal/process/task_queues.js:95:5)
+    Error: TokenExpiredError: jwt expired at 2025-05-16T12:03:24.000Z
+
+[2025-05-16T12:04:01.894Z] [ERROR] [payment-service] [req-2a1c] Timeout while calling billing microservice
+    at Timeout.<anonymous> (/app/services/billingClient.js:32:17)
+    at listOnTimeout (internal/timers.js:554:17)
+    Error: Error: Request timed out after 5000ms
+
+[2025-05-16T12:04:59.772Z] [ERROR] [order-service] [req-44fc] Database connection failed
+    at connect (/app/db/postgresClient.js:22:15)
+    Error: SequelizeConnectionError: no pg_hba.conf entry for host "10.10.1.20", user "service_user", database "orders"
+
+[2025-05-16T12:05:13.388Z] [ERROR] [notification-service] [req-87be] Failed to send email: Mail server not reachable
+    at sendEmail (/app/services/emailService.js:58:13)
+    Error: Error: getaddrinfo ENOTFOUND smtp.mailgun.org
+
+[2025-05-16T12:06:42.114Z] [ERROR] [inventory-service] [req-9d8a] Invalid product ID received in request
+    at validateInput (/app/controllers/productController.js:101:9)
+    Error: ValidationError: Product ID must be a valid UUID
+
+[2025-05-16T12:07:00.501Z] [ERROR] [gateway-service] [req-bf34] Circuit breaker open for payment-service
+    at routeRequest (/app/gateway/router.js:76:11)
+    Error: CircuitBreakerOpenError: Service temporarily unavailable
+
+[2025-05-16T12:07:45.237Z] [ERROR] [user-service] [req-a0de] Unexpected null value in user profile
+    at buildUserProfile (/app/services/userService.js:129:11)
+    Error: TypeError: Cannot read property 'email' of null

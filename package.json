@@ -1,0 +1,28 @@
+{
+  "name": "qa-ai-agent",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^0.14.1",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "form-data-encoder": "^4.0.2",
+    "formdata-node": "^6.0.3",
+    "inquirer": "^12.6.1",
+    "undici": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@types/node-fetch": "^2.6.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "jira:test": "ts-node src/tests/jiraTest.ts"
+  }
+}

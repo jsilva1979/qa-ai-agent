@@ -1,0 +1,4 @@
+[2025-05-16T12:04:01.894Z] [ERROR] [payment-service] [req-2a1c] Timeout while calling billing microservice
+    at Timeout.<anonymous> (/app/services/billingClient.js:32:17)
+    at listOnTimeout (internal/timers.js:554:17)
+    Error: Error: Request timed out after 5000ms
