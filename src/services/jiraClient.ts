@@ -9,11 +9,6 @@ const JIRA_BASE_URL = process.env.JIRA_BASE_URL;
 const JIRA_EMAIL = process.env.JIRA_EMAIL;
 const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
 
-console.log('JIRA_BASE_URL:', process.env.JIRA_BASE_URL);
-console.log('JIRA_EMAIL:', process.env.JIRA_EMAIL);
-console.log('JIRA_API_TOKEN:', process.env.JIRA_API_TOKEN);
-
-
 if (!JIRA_BASE_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {
   throw new Error('Variáveis de ambiente do Jira não configuradas.');
 }
