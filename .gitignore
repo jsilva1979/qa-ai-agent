@@ -1,3 +1,22 @@
+# Dependencies
 node_modules/
 dist/
+
+# Environment variables
 .env
+
+# Cache and temporary files
+.cache/
+*.gz
+*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Test data and logs
+test-data/*.explicacao.md
+test-data/*.gz

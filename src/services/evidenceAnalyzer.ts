@@ -3,6 +3,12 @@ import path from 'path';
 import readline from 'readline';
 import { gerarExplicacaoErro } from '../agents/geminiAgent';
 import { commentOnJira, attachFileToJira } from './jiraClient';
+import { LogCompressor } from '../utils/logCompressor';
+import { TestLogger } from '../utils/testLogger';
+import { MCPResponse } from '../config/mcpConfig';
+
+const logCompressor = new LogCompressor();
+const testLogger = new TestLogger();
 
 function perguntarUsuario(pergunta: string): Promise<boolean> {
   const rl = readline.createInterface({
@@ -18,16 +24,16 @@ function perguntarUsuario(pergunta: string): Promise<boolean> {
   });
 }
 
-export async function generateExplanationFromLog(logContent: string): Promise<string> {
+export async function generateExplanationFromLog(logContent: string): Promise<MCPResponse> {
   const prompt = `Explique o seguinte erro de forma clara e didática para um analista de QA:\n\n${logContent}`;
-  const explicacao = await gerarExplicacaoErro(prompt);
+  const response = await gerarExplicacaoErro(prompt);
 
-  if (!explicacao) {
+  if (!response || !response.content) {
     throw new Error('❌ Não foi possível gerar explicação com a IA.');
   }
 
-  console.log('🔎 Explicação gerada pela IA (prévia):\n', explicacao);
-  return explicacao;
+  console.log('🔎 Explicação gerada pela IA (prévia):\n', response.content);
+  return response;
 }
 
 export async function runAgent(logPath: string, ticketKey: string) {
@@ -42,21 +48,28 @@ export async function runAgent(logPath: string, ticketKey: string) {
       throw new Error('❌ ticketKey inválido ou não informado.');
     }
 
+    // Lê e comprime o log
     const log = fs.readFileSync(fullLogPath, 'utf-8');
-    console.log('📥 Log lido com sucesso.');
+    const compressedLogPath = fullLogPath + '.gz';
+    await logCompressor.compressAndSaveLog(log, compressedLogPath);
+    console.log('📥 Log lido e comprimido com sucesso.');
 
-    const explicacao = await generateExplanationFromLog(log);
+    const response = await generateExplanationFromLog(log);
 
     console.log('\n🧠 Explicação gerada pela IA:\n');
-    console.log(explicacao);
+    console.log(response.content);
+    console.log('\n📊 Metadados da análise:');
+    console.log(`- Tempo de processamento: ${response.metadata.processingTime}ms`);
+    console.log(`- Confiança: ${(response.metadata.confidence * 100).toFixed(1)}%`);
+    console.log(`- Tokens utilizados: ${response.metadata.tokensUsed}`);
 
-    const explicacaoPath = fullLogPath.replace(/\.[^.]+$/, '.explicacao.md');
-    fs.writeFileSync(explicacaoPath, explicacao, 'utf-8');
-    console.log(`📝 Explicação salva em: ${explicacaoPath}`);
+    // Salva a explicação usando o TestLogger
+    const logFileName = path.basename(fullLogPath, path.extname(fullLogPath));
+    testLogger.logTestResult(logFileName, response.content);
 
     const desejaComentar = await perguntarUsuario('\n💬 Deseja comentar essa explicação no ticket do Jira?');
     if (desejaComentar) {
-      await commentOnJira(ticketKey, explicacao);
+      await commentOnJira(ticketKey, response.content);
       console.log(`✅ Comentário enviado para o ticket ${ticketKey}`);
     } else {
       console.log('🚫 Comentário no Jira ignorado.');
@@ -64,13 +77,22 @@ export async function runAgent(logPath: string, ticketKey: string) {
 
     const desejaAnexar = await perguntarUsuario('📎 Deseja anexar o arquivo de log como evidência no Jira?');
     if (desejaAnexar) {
-      await attachFileToJira(ticketKey, fullLogPath);
-      console.log(`✅ Arquivo anexado ao ticket ${ticketKey}`);
+      // Anexa o arquivo comprimido
+      await attachFileToJira(ticketKey, compressedLogPath);
+      console.log(`✅ Arquivo comprimido anexado ao ticket ${ticketKey}`);
+      
+      // Remove o arquivo comprimido após o upload
+      fs.unlinkSync(compressedLogPath);
     } else {
       console.log('🚫 Anexo de evidência ignorado.');
+      // Remove o arquivo comprimido se não for anexado
+      fs.unlinkSync(compressedLogPath);
     }
 
   } catch (error) {
     console.error('❌ Erro ao rodar o agente:\n', (error instanceof Error ? error.stack : error));
+    // Log do erro também usando o TestLogger
+    const logFileName = path.basename(logPath, path.extname(logPath));
+    testLogger.logTestResult(logFileName, `❌ Erro ao analisar o log: ${error instanceof Error ? error.message : error}`);
   }
 }
