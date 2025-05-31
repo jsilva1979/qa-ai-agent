@@ -78,4 +78,20 @@ export const LOG_CONFIG = {
   level: 'info',
   format: 'json',
   timestamp: true
-}; 
+};
+
+// Interface para rastreamento de uso de tokens
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  timestamp: string;
+  model: string;
+}
+
+// Interface para resposta do agente com metadados
+export interface AgentResponse {
+  content: string;
+  tokenUsage: TokenUsage;
+  processingTime: number;
+} 

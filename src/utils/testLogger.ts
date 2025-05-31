@@ -3,38 +3,37 @@ import path from 'path';
 
 export class TestLogger {
   private logDir: string;
+  private logFile: string;
 
-  constructor(logDir: string = path.join(process.cwd(), 'test-data')) {
-    this.logDir = logDir;
-  }
-
-  public logTestResult(testName: string, result: string): void {
-    const timestamp = new Date().toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo'
-    });
+  constructor(testName: string) {
+    this.logDir = path.join(process.cwd(), 'logs');
+    this.logFile = path.join(this.logDir, `${testName}-${new Date().toISOString().replace(/[:.]/g, '-')}.log`);
     
-    const logContent = `## Teste executado em: ${timestamp}\n\n${result}\n\n---\n\n`;
+    if (!fs.existsSync(this.logDir)) {
+      fs.mkdirSync(this.logDir, { recursive: true });
+    }
+  }
+
+  private log(level: string, ...args: any[]) {
+    const timestamp = new Date().toISOString();
+    const message = args.map(arg => 
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+    ).join(' ');
+    const logEntry = `[${timestamp}] [${level}] ${message}\n`;
     
-    const logFileName = `${testName}.explicacao.md`;
-    const logPath = path.join(this.logDir, logFileName);
-    
-    // Append to existing file or create new one
-    fs.appendFileSync(logPath, logContent);
+    fs.appendFileSync(this.logFile, logEntry);
+    console.log(logEntry.trim());
   }
 
-  info(message: string, ...args: any[]) {
-    console.log(`[INFO] ${message}`, ...args);
+  info(...args: any[]) {
+    this.log('INFO', ...args);
   }
 
-  error(message: string, ...args: any[]) {
-    console.error(`[ERROR] ${message}`, ...args);
+  error(...args: any[]) {
+    this.log('ERRO', ...args);
   }
 
-  warn(message: string, ...args: any[]) {
-    console.warn(`[WARN] ${message}`, ...args);
-  }
-
-  debug(message: string, ...args: any[]) {
-    console.debug(`[DEBUG] ${message}`, ...args);
+  warn(...args: any[]) {
+    this.log('ALERTA', ...args);
   }
 } 
