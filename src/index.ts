@@ -1,6 +1,8 @@
 import { runAgent } from './services/evidenceAnalyzer';
+import { AppDataSource } from './config/database';
 
 async function main() {
+  await AppDataSource.initialize();
   const args = process.argv.slice(2);
   if (args.length < 2) {
     console.error('Uso: yarn dev <logFile1> [logFile2 ...] <ticketJira>');
@@ -15,6 +17,7 @@ async function main() {
     await runAgent(logFile, ticketKey);
   }
 
+  await AppDataSource.destroy();
   console.log('\n✅ Todos os logs foram processados.');
 }
 

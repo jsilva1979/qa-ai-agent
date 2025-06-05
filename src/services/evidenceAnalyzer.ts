@@ -6,9 +6,11 @@ import { commentOnJira, attachFileToJira } from './jiraClient';
 import { LogCompressor } from '../utils/logCompressor';
 import { TestLogger } from '../utils/testLogger';
 import { MCPResponse } from '../config/mcpConfig';
+import { AppDataSource } from '../config/database';
+import { Interaction } from '../models/Interaction';
 
 const logCompressor = new LogCompressor();
-const testLogger = new TestLogger();
+const testLogger = new TestLogger('evidenceAnalyzer');
 
 function perguntarUsuario(pergunta: string): Promise<boolean> {
   const rl = readline.createInterface({
@@ -33,7 +35,24 @@ export async function generateExplanationFromLog(logContent: string): Promise<MC
   }
 
   console.log('🔎 Explicação gerada pela IA (prévia):\n', response.content);
-  return response;
+  return {
+    content: response.content,
+    metadata: {
+      confidence: 0,
+      processingTime: 0,
+      tokensUsed: 0
+    },
+    context: {
+      role: '',
+      task: '',
+      constraints: [],
+      metadata: {
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+        model: 'default'
+      }
+    }
+  };
 }
 
 export async function runAgent(logPath: string, ticketKey: string) {
@@ -66,6 +85,15 @@ export async function runAgent(logPath: string, ticketKey: string) {
     // Salva a explicação usando o TestLogger
     const logFileName = path.basename(fullLogPath, path.extname(fullLogPath));
     testLogger.logTestResult(logFileName, response.content);
+
+    // Salvar interação no banco de dados
+    const interaction = new Interaction();
+    interaction.userQuery = log;
+    interaction.aiResponse = response.content;
+    interaction.context = ticketKey;
+    interaction.metadata = JSON.stringify(response.metadata);
+    await AppDataSource.manager.save(interaction);
+    console.log('💾 Interação salva no banco de dados!');
 
     const desejaComentar = await perguntarUsuario('\n💬 Deseja comentar essa explicação no ticket do Jira?');
     if (desejaComentar) {

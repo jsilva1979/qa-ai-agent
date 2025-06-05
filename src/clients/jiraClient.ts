@@ -8,7 +8,6 @@ export class JiraClient {
     const url = process.env.JIRA_URL;
     const email = process.env.JIRA_EMAIL;
     const token = process.env.JIRA_API_TOKEN;
-    const auth = process.env.JIRA_AUTH;
 
     if (!url || !email || !token) {
       throw new Error('Credenciais do Jira não configuradas corretamente. Verifique as variáveis de ambiente JIRA_URL, JIRA_EMAIL e JIRA_API_TOKEN.');

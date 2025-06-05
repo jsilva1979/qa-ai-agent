@@ -36,4 +36,8 @@ export class TestLogger {
   warn(...args: any[]) {
     this.log('ALERTA', ...args);
   }
+
+  logTestResult(testName: string, result: string) {
+    this.info(`Test: ${testName}, Result: ${result}`);
+  }
 } 

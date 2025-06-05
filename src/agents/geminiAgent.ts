@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 import { CacheManager } from "../utils/cacheManager";
 import { AGENT_INSTRUCTIONS } from "../config/agentInstructions";
-import { MCP_CONFIG, MCPContext, MCPResponse } from "../config/mcpConfig";
 import { AgentResponse, TokenUsage } from "../config/agentConfig";
 import path from 'path';
 

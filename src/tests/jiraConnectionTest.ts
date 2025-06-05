@@ -2,17 +2,16 @@
 authentication methods and API versions. Here's a summary of what each test case is doing: */
 import axios from 'axios';
 import { TestLogger } from '../utils/testLogger';
-import { Buffer } from 'buffer';
 import { JiraClient } from '../clients/jiraClient';
 
-const jiraClient = new JiraClient();
+// const jiraClient = new JiraClient();
 
 describe('Testes de Conexão com Jira', () => {
-  let jiraClient: JiraClient;
+  // let jiraClient: JiraClient;
   let logger: TestLogger;
 
   beforeEach(() => {
-    jiraClient = new JiraClient();
+    // jiraClient = new JiraClient();
     logger = new TestLogger('teste-conexao-jira');
   });
 
@@ -102,6 +101,12 @@ describe('Testes de Conexão com Jira', () => {
     if (basicUserResponse.status !== 200) {
       throw new Error('Falha na conexão com o Jira (Basic, API v2)');
     }
+  });
+
+  it('should establish connection with Jira', async () => {
+    const client = new JiraClient();
+    const isConnected = await client.testConnection();
+    expect(isConnected).toBe(true);
   });
 });
 

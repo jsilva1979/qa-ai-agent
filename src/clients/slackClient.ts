@@ -29,17 +29,6 @@ export class SlackClient {
   }
 
   /**
-   * Escapa caracteres especiais para uso em mrkdwn do Slack
-   */
-  private escapeMrkdwn(text: string): string {
-    // Como a análise já virá pré-formatada, vamos focar em escapar apenas o necessário para o payload geral,
-    // mas o markdown dentro da análise deve ser gerado pelo agente.
-    // No entanto, para garantir segurança e compatibilidade, vamos manter a função,
-    // embora possa não ser estritamente necessária para o conteúdo markdown vindo do agente.
-     return text; // Mantém a função mas desabilita o escape para markdown gerado externamente
-  }
-
-  /**
    * Envia uma mensagem para o canal do Slack via webhook
    */
   async sendMessage(message: string): Promise<boolean> {

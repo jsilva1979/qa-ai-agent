@@ -1,6 +1,6 @@
 # QA AI Agent
 
-Um agente de IA para análise de logs de erro usando a API Gemini do Google.
+Um agente de IA para análise de logs de erro usando a API Gemini do Google, com foco em automação de QA.
 
 ## 🚀 Funcionalidades
 
@@ -11,12 +11,15 @@ Um agente de IA para análise de logs de erro usando a API Gemini do Google.
 - Predição de problemas similares
 - Sistema de cache para otimização
 - Suporte a múltiplos formatos de log
+- **Geração e envio de análises de log formatadas para o Slack**
+- **Integração com banco de dados para armazenamento de interações e dados RAG**
 
 ## 📋 Pré-requisitos
 
 - Node.js >= 18.0.0
 - Yarn ou npm
 - Chave de API do Gemini
+- **Instância do PostgreSQL e Redis rodando localmente ou acessível via rede**
 
 ## 🔧 Instalação
 
@@ -35,7 +38,9 @@ yarn install
 ```bash
 cp .env.example .env
 ```
-Edite o arquivo `.env` com suas configurações.
+Edite o arquivo `.env` com suas configurações. Consulte a seção **🔑 Configuração** para detalhes.
+
+**Importante:** Certifique-se de que o PostgreSQL e o Redis estejam rodando antes de inicializar o banco de dados ou executar testes que dependam deles.
 
 ## 🚀 Uso
 
@@ -55,30 +60,94 @@ yarn start
 ```
 
 4. Testes:
-```bash
-yarn test
-```
+   - Executar todos os testes que estão passando (excluindo testes de Jira temporariamente):
+     ```bash
+     yarn test
+     ```
+   - Executar todos os testes (incluindo Jira - requer configuração):
+     ```bash
+     yarn test:all # Este script precisaria ser adicionado no package.json, ou usar o comando jest sem a flag de exclusão
+     ```
+   - Executar testes de RAG:
+     ```bash
+     yarn rag:test
+     ```
+   - Executar testes de Logging:
+     ```bash
+     yarn test:logging
+     ```
+   - Executar teste manual (gera análise e tenta enviar para Slack):
+     ```bash
+     yarn test:manual
+     ```
+   - Executar testes de Jira (requer configuração):
+     ```bash
+     yarn jira:test
+     ```
+     ```bash
+     yarn jira:connection
+     ```
 
 ## 📁 Estrutura do Projeto
 
 ```
 src/
 ├── agents/           # Agentes de IA
-├── config/           # Configurações
-├── services/         # Serviços principais
-├── test/            # Testes
-└── utils/           # Utilitários
+├── clients/          # Clientes para APIs externas (Jira, Slack)
+├── config/           # Configurações (Banco de Dados, MCP)
+├── models/           # Modelos de dados (TypeORM)
+├── services/         # Serviços principais (RAG, Redis)
+├── scripts/          # Scripts utilitários (Inicialização do Banco de Dados)
+├── tests/            # Testes unitários e de integração
+├── utils/           # Utilitários (Logger, Cache)
+└── index.ts        # Ponto de entrada
 ```
 
 ## 🔑 Configuração
 
-O projeto usa as seguintes variáveis de ambiente:
+Configure as seguintes variáveis de ambiente no seu arquivo `.env`:
 
-- `GEMINI_API_KEY`: Chave da API Gemini
-- `CACHE_TTL`: Tempo de vida do cache em segundos
-- `CACHE_MAX_SIZE`: Tamanho máximo do cache
-- `LOG_LEVEL`: Nível de log (debug, info, warn, error)
-- `LOG_FORMAT`: Formato do log (json, text)
+```env
+# Gemini Configuration
+GEMINI_API_KEY=sua_chave_api_aqui
+
+# Slack Configuration
+SLACK_WEBHOOK_URL=sua_url_webhook_aqui
+
+# Database Configuration (PostgreSQL)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres_password
+DB_NAME=qa_ai_agent
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+
+# Log Configuration
+LOG_LEVEL=debug
+LOG_FORMAT=json
+
+# Jira Configuration (requer configuração completa para testes de Jira)
+JIRA_BASE_URL=https://seu-projeto.atlassian.net
+JIRA_EMAIL=seu-email@exemplo.com
+JIRA_API_TOKEN=seu-token-jira
+# Dependendo dos testes de Jira, outras variáveis podem ser necessárias (ex: JIRA_TOKEN, JIRA_AUTH)
+```
+
+Substitua os valores entre `< >` pelos seus dados reais.
+
+## 🛠️ Scripts de Banco de Dados
+
+- Inicializar o banco de dados (criar tabelas):
+  ```bash
+  yarn db:init
+  ```
+
+- Popular o banco de dados com prompts (se houver scripts de seed):
+  ```bash
+  yarn db:seed:prompts
+  ```
 
 ## 🤝 Contribuindo
 
