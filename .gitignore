@@ -20,3 +20,4 @@ dist/
 # Test data and logs
 test-data/*.explicacao.md
 test-data/*.gz
+credentials.json

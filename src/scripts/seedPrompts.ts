@@ -1,11 +1,11 @@
-import { db } from '../config/database';
+import { pool } from '../config/database';
 
 async function seedPrompts() {
   try {
     console.log('Starting prompt seeding...');
 
     // Insert initial prompt versions
-    await db.none(`
+    await pool.query(`
       INSERT INTO prompt_versions (name, description, template, is_active)
       VALUES 
         ('Prompt Técnico v1', 'Primeira versão para análise de logs com foco técnico', 
